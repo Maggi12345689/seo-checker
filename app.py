@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, render_template
 from bs4 import BeautifulSoup
 import requests
@@ -18,58 +17,74 @@ def check_seo():
     soup = BeautifulSoup(html, "html.parser")
     results = {}
 
+    # Hilfsfunktion zur Längenprüfung
     def length_status(text, min_len, max_len):
-        if len(text) < min_len: return "Zu kurz"
-        elif len(text) > max_len: return "Zu lang"
+        if len(text) < min_len:
+            return "Zu kurz"
+        elif len(text) > max_len:
+            return "Zu lang"
         return "OK"
 
-    # Title
+    # --- Title ---
     title = soup.title.string.strip() if soup.title and soup.title.string else ""
     results["Title"] = {
-        "Status": "Fehlt" if not title else length_status(title, 30, 60),
+        "Status": "fehlt" if not title else length_status(title, 55, 65),
         "Details": f"{len(title)} Zeichen" if title else ""
     }
 
-    # Meta Description
+    # --- Meta Description ---
     desc_tag = soup.find("meta", attrs={"name": "description"})
     desc = desc_tag["content"].strip() if desc_tag and desc_tag.get("content") else ""
     results["Meta Description"] = {
-        "Status": "Fehlt" if not desc else length_status(desc, 70, 160),
+        "Status": "fehlt" if not desc else length_status(desc, 118, 165),
         "Details": f"{len(desc)} Zeichen" if desc else ""
     }
 
-    # H1
-    h1s = soup.find_all("h1")
-    results["H1"] = {
-        "Status": "Fehlt" if not h1s else "Mehrere H1" if len(h1s) > 1 else "OK",
-        "Details": f"{len(h1s)} gefunden"
+    # --- Meta Robots ---
+    robots_tag = soup.find("meta", attrs={"name": "robots"})
+    robots_content = robots_tag["content"].strip().lower() if robots_tag and robots_tag.get("content") else ""
+    if not robots_content:
+        robots_status = "fehlt"
+    elif "index" in robots_content and "follow" in robots_content:
+        robots_status = "ist indexiert, Links wird gefolgt"
+    else:
+        robots_status = "fehlt"
+    results["Meta Robots"] = {
+        "Status": robots_status,
+        "Details": robots_content
     }
 
-    # Images without alt
-    images = soup.find_all("img")
-    no_alt = [img for img in images if not img.get("alt")]
-    results["Bilder ohne ALT"] = {
-        "Status": "OK" if not no_alt else f"{len(no_alt)} ohne ALT",
-        "Details": ""
-    }
-
-    # Canonical
+    # --- Canonical ---
     canonical = soup.find("link", rel="canonical")
-    canonical_href = canonical["href"] if canonical and canonical.get("href") else ""
+    canonical_href = canonical["href"].strip() if canonical and canonical.get("href") else ""
     results["Canonical"] = {
-        "Status": "Fehlt" if not canonical_href else "OK",
+        "Status": "fehlt" if not canonical_href else "vorhanden",
         "Details": canonical_href
     }
 
-    # HTML lang
-    html_tag = soup.find("html")
-    lang = html_tag.get("lang") if html_tag else None
-    results["HTML lang"] = {
-        "Status": "Fehlt" if not lang else "OK",
-        "Details": lang or ""
+    # --- H1 ---
+    h1s = soup.find_all("h1")
+    if not h1s:
+        h1_status = "fehlt"
+    elif len(h1s) == 1:
+        h1_status = "vorhanden"
+    else:
+        h1_status = "mehrfach definiert"
+    results["H1"] = {
+        "Status": h1_status,
+        "Details": f"{len(h1s)} gefunden"
     }
 
-    # robots.txt
+    # --- Bilder mit ALT ---
+    images = soup.find_all("img")
+    images_without_alt = [img for img in images if not img.get("alt")]
+    img_status = "fehlt" if images_without_alt else "vorhanden"
+    results["Bilder ALT-Attribute"] = {
+        "Status": img_status,
+        "Details": f"{len(images_without_alt)} ohne ALT" if images_without_alt else ""
+    }
+
+    # --- robots.txt ---
     if url:
         try:
             domain = url.split("/")[2]
