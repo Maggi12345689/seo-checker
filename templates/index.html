@@ -7,5 +7,36 @@
 <body>
     <h1>SEO-Check</h1>
     <p>Hier kannst du HTML-Code eingeben und technische SEO-Faktoren prüfen.</p>
+
+    <form id="seoForm">
+        <label for="html">HTML-Code:</label><br>
+        <textarea id="html" name="html" rows="15" cols="100" placeholder="Füge hier den HTML-Quellcode deiner Landingpage ein..."></textarea><br><br>
+        <label for="url">URL (optional, für robots.txt):</label><br>
+        <input type="text" id="url" name="url" placeholder="https://beispiel.de"><br><br>
+        <button type="submit">SEO prüfen</button>
+    </form>
+
+    <h2>Ergebnisse:</h2>
+    <pre id="results">Noch keine Analyse durchgeführt.</pre>
+
+    <script>
+        document.getElementById("seoForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const html = document.getElementById("html").value;
+            const url = document.getElementById("url").value;
+
+            const response = await fetch("/check-seo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ html, url })
+            });
+
+            const data = await response.json();
+            const resultArea = document.getElementById("results");
+
+            resultArea.textContent = JSON.stringify(data, null, 2);
+        });
+    </script>
 </body>
 </html>
