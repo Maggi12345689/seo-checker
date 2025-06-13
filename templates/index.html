@@ -1,152 +1,161 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SEO-Checker</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f5f2e9; /* Beige */
-      color: #001f3f; /* Dunkelblau */
-    }
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #001f3f;
-      padding: 10px 30px;
-      color: white;
-    }
-    .navbar img {
-      height: 40px;
-    }
-    .nav-links {
-      display: flex;
-      gap: 20px;
-    }
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    .nav-links a:hover {
-      text-decoration: underline;
-    }
-    .container {
-      max-width: 900px;
-      margin: 40px auto;
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    }
-    h1 {
-      color: #001f3f;
-    }
-    label {
-      font-weight: bold;
-    }
-    textarea, input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-family: monospace;
-    }
-    button {
-      background-color: #001f3f;
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background-color: #003366;
-    }
-    .results {
-      margin-top: 30px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      background-color: #001f3f;
-      color: white;
-    }
-    footer {
-      background-color: #001f3f;
-      color: white;
-      text-align: center;
-      padding: 15px 0;
-      margin-top: 50px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>SEO Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5dc; /* Beige */
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background-color: #001f3f; /* Dunkelblau */
+            color: beige;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+        }
+
+        nav img {
+            height: 50px;
+        }
+
+        nav a {
+            color: beige;
+            margin-left: 1.5rem;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        button {
+            background-color: #001f3f;
+            color: beige;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 2rem;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: #001f3f;
+            color: beige;
+        }
+
+        footer {
+            margin-top: 4rem;
+            padding: 2rem;
+            background-color: #001f3f;
+            color: beige;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <nav class="navbar">
-    <img src="logo.png" alt="SEO Agentur Logo" />
-    <div class="nav-links">
-      <a href="#leistungen">Leistungen</a>
-      <a href="#ueber-uns">Über Uns</a>
-      <a href="#kontakt">Kontakt</a>
+
+    <!-- Navigation -->
+    <nav>
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+        <div>
+            <a href="#leistungen">Leistungen</a>
+            <a href="#ueber-uns">Über Uns</a>
+            <a href="#kontakt">Kontakt</a>
+        </div>
+    </nav>
+
+    <!-- Inhalt -->
+    <div class="container">
+        <h1>SEO-Check für deine Landingpage</h1>
+        <p>Füge hier den HTML-Code deiner Seite ein:</p>
+        <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
+        <button onclick="analyzeSEO()">Analysieren</button>
+
+        <table id="resultsTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>SEO Element</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
-  </nav>
 
-  <div class="container">
-    <h1>SEO-Check</h1>
-    <p>Hier kannst du HTML-Code eingeben und technische SEO-Faktoren prüfen.</p>
+    <!-- Footer -->
+    <footer>
+        &copy; {{ year }} Deine SEO Agentur – Alle Rechte vorbehalten.
+    </footer>
 
-    <label for="htmlCode">HTML-Code:</label>
-    <textarea id="htmlCode" rows="10" placeholder="Füge hier den HTML-Quellcode deiner Landingpage ein..."></textarea>
+    <!-- JS -->
+    <script>
+        async function analyzeSEO() {
+            const html = document.getElementById("htmlInput").value;
 
-    <label for="url">URL (optional, für robots.txt):</label>
-    <input type="text" id="url" placeholder="https://beispiel.de" />
+            const response = await fetch("/check-seo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ html: html })
+            });
 
-    <button onclick="checkSEO()">SEO prüfen</button>
+            const data = await response.json();
+            const tbody = document.querySelector("#resultsTable tbody");
+            tbody.innerHTML = "";
 
-    <div class="results" id="results">
-      <h2>Ergebnisse:</h2>
-      <p>Noch keine Analyse durchgeführt.</p>
-    </div>
-  </div>
+            for (const [key, value] of Object.entries(data)) {
+                const row = `<tr>
+                    <td>${key}</td>
+                    <td>${value.Status}</td>
+                    <td>${value.Details}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            }
 
-  <footer>
-    &copy; 2025 Deine SEO-Agentur – Alle Rechte vorbehalten.
-  </footer>
+            document.getElementById("resultsTable").style.display = "table";
+        }
 
-  <script>
-    async function checkSEO() {
-      const html = document.getElementById("htmlCode").value;
-      const url = document.getElementById("url").value;
-      const response = await fetch("/check-seo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html, url })
-      });
-      const results = await response.json();
+        // Aktuelles Jahr im Footer einfügen
+        document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
+    </script>
 
-      const resultsContainer = document.getElementById("results");
-      let table = `<table><tr><th>Faktor</th><th>Status</th><th>Details</th></tr>`;
-      for (const key in results) {
-        const res = results[key];
-        table += `<tr><td>${key}</td><td>${res.Status}</td><td>${res.Details}</td></tr>`;
-      }
-      table += `</table>`;
-      resultsContainer.innerHTML = "<h2>Ergebnisse:</h2>" + table;
-    }
-  </script>
 </body>
 </html>
