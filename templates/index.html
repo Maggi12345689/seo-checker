@@ -81,11 +81,6 @@
             color: beige;
         }
 
-        #robotsResult {
-            margin-top: 1rem;
-            font-weight: bold;
-        }
-
         footer {
             margin-top: 4rem;
             padding: 2rem;
@@ -110,9 +105,14 @@
     <!-- Inhalt -->
     <div class="container">
         <h1>SEO-Check für deine Landingpage</h1>
+
         <p>Füge hier den HTML-Code deiner Seite ein:</p>
         <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
-        <button onclick="analyzeSEO()">Analysieren</button>
+
+        <p>Gib zusätzlich die vollständige URL deiner Website für die robots.txt-Prüfung ein:</p>
+        <input type="text" id="robotsUrl" placeholder="https://www.deineseite.de">
+
+        <button onclick="analyzeAll()">Analysieren</button>
 
         <table id="resultsTable" style="display:none;">
             <thead>
@@ -124,14 +124,6 @@
             </thead>
             <tbody></tbody>
         </table>
-
-        <hr style="margin: 3rem 0;">
-
-        <h2>robots.txt prüfen</h2>
-        <p>Gib die vollständige URL deiner Website ein:</p>
-        <input type="text" id="robotsUrl" placeholder="https://www.deineseite.de">
-        <button onclick="checkRobotsTxt()">robots.txt prüfen</button>
-        <div id="robotsResult"></div>
     </div>
 
     <!-- Footer -->
@@ -141,20 +133,55 @@
 
     <!-- JS -->
     <script>
-        async function analyzeSEO() {
+        async function analyzeAll() {
             const html = document.getElementById("htmlInput").value;
-
-            const response = await fetch("/check-seo", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ html: html })
-            });
-
-            const data = await response.json();
+            const url = document.getElementById("robotsUrl").value;
             const tbody = document.querySelector("#resultsTable tbody");
             tbody.innerHTML = "";
 
-            for (const [key, value] of Object.entries(data)) {
+            // 1. SEO HTML Analyse
+            let seoData = {};
+            try {
+                const seoResponse = await fetch("/check-seo", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ html: html })
+                });
+                seoData = await seoResponse.json();
+            } catch (error) {
+                seoData["HTML Analyse"] = {
+                    Status: "Fehler",
+                    Details: "Konnte nicht analysiert werden."
+                };
+            }
+
+            // 2. robots.txt Prüfung
+            let robotsResult = {
+                Status: "Fehler",
+                Details: "robots.txt konnte nicht geprüft werden."
+            };
+            if (url) {
+                try {
+                    const robotsResponse = await fetch("/check-robots", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ url: url })
+                    });
+                    const robotsData = await robotsResponse.json();
+                    robotsResult = {
+                        Status: robotsData.exists ? "Vorhanden" : "Fehlt",
+                        Details: robotsData.message || ""
+                    };
+                } catch (e) {
+                    robotsResult = {
+                        Status: "Fehler",
+                        Details: "robots.txt Anfrage fehlgeschlagen."
+                    };
+                }
+            }
+
+            // 3. Tabelle befüllen
+            for (const [key, value] of Object.entries(seoData)) {
                 const row = `<tr>
                     <td>${key}</td>
                     <td>${value.Status}</td>
@@ -163,30 +190,15 @@
                 tbody.innerHTML += row;
             }
 
+            // 4. robots.txt Ergebnis anhängen
+            const robotsRow = `<tr>
+                <td>robots.txt</td>
+                <td>${robotsResult.Status}</td>
+                <td>${robotsResult.Details}</td>
+            </tr>`;
+            tbody.innerHTML += robotsRow;
+
             document.getElementById("resultsTable").style.display = "table";
-        }
-
-        async function checkRobotsTxt() {
-            const url = document.getElementById("robotsUrl").value;
-            const resultDiv = document.getElementById("robotsResult");
-
-            if (!url) {
-                resultDiv.textContent = "Bitte eine gültige URL eingeben.";
-                return;
-            }
-
-            try {
-                const response = await fetch("/check-robots", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ url: url })
-                });
-
-                const data = await response.json();
-                resultDiv.textContent = data.message || "Keine Daten erhalten.";
-            } catch (error) {
-                resultDiv.textContent = "Fehler beim Abrufen der robots.txt.";
-            }
         }
 
         // Aktuelles Jahr im Footer einfügen
