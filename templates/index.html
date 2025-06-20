@@ -1,161 +1,31 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>SEO Checker</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5dc; /* Beige */
-            margin: 0;
-            padding: 0;
-        }
+<!-- Inhalt -->
+<div class="container">
+    <h1>SEO-Check für deine Landingpage</h1>
 
-        nav {
-            background-color: #001f3f; /* Dunkelblau */
-            color: beige;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-        }
+    <!-- HTML-Code Eingabe -->
+    <p>Füge hier den HTML-Code deiner Seite ein:</p>
+    <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
+    <button onclick="analyzeSEO()">Analysieren</button>
 
-        nav img {
-            height: 50px;
-        }
+    <!-- SEO-Ergebnisse Tabelle -->
+    <table id="resultsTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>SEO Element</th>
+                <th>Status</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 
-        nav a {
-            color: beige;
-            margin-left: 1.5rem;
-            text-decoration: none;
-            font-weight: bold;
-        }
+    <hr style="margin: 3rem 0;">
 
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            background-color: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
+    <!-- robots.txt Prüfung -->
+    <h2>robots.txt prüfen</h2>
+    <p>Gib die vollständige URL deiner Website ein (z. B. https://www.example.de):</p>
+    <input type="text" id="robotsUrl" placeholder="https://www.deine-seite.de" style="width:100%;padding:0.5rem;border:1px solid #ccc;border-radius:5px;">
+    <button onclick="checkRobotsTxt()">robots.txt prüfen</button>
 
-        textarea {
-            width: 100%;
-            height: 200px;
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            resize: vertical;
-            font-family: monospace;
-        }
-
-        button {
-            background-color: #001f3f;
-            color: beige;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-
-        table {
-            width: 100%;
-            margin-top: 2rem;
-            border-collapse: collapse;
-        }
-
-        table, th, td {
-            border: 1px solid #ccc;
-        }
-
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-        }
-
-        th {
-            background-color: #001f3f;
-            color: beige;
-        }
-
-        footer {
-            margin-top: 4rem;
-            padding: 2rem;
-            background-color: #001f3f;
-            color: beige;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Navigation -->
-    <nav>
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
-        <div>
-            <a href="#leistungen">Leistungen</a>
-            <a href="#ueber-uns">Über Uns</a>
-            <a href="#kontakt">Kontakt</a>
-        </div>
-    </nav>
-
-    <!-- Inhalt -->
-    <div class="container">
-        <h1>SEO-Check für deine Landingpage</h1>
-        <p>Füge hier den HTML-Code deiner Seite ein:</p>
-        <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
-        <button onclick="analyzeSEO()">Analysieren</button>
-
-        <table id="resultsTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>SEO Element</th>
-                    <th>Status</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-        &copy; {{ year }} Deine SEO Agentur – Alle Rechte vorbehalten.
-    </footer>
-
-    <!-- JS -->
-    <script>
-        async function analyzeSEO() {
-            const html = document.getElementById("htmlInput").value;
-
-            const response = await fetch("/check-seo", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ html: html })
-            });
-
-            const data = await response.json();
-            const tbody = document.querySelector("#resultsTable tbody");
-            tbody.innerHTML = "";
-
-            for (const [key, value] of Object.entries(data)) {
-                const row = `<tr>
-                    <td>${key}</td>
-                    <td>${value.Status}</td>
-                    <td>${value.Details}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            }
-
-            document.getElementById("resultsTable").style.display = "table";
-        }
-
-        // Aktuelles Jahr im Footer einfügen
-        document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
-    </script>
-
-</body>
-</html>
+    <div id="robotsResult" style="margin-top:1.5rem; font-weight:bold;"></div>
+</div>
