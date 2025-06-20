@@ -1,209 +1,190 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>SEO Checker</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5dc; /* Beige */
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="UTF-8">
+  <title>SEO Checker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5dc; /* Beige */
+      margin: 0;
+      padding: 0;
+    }
 
-        nav {
-            background-color: #001f3f; /* Dunkelblau */
-            color: beige;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-        }
+    nav {
+      background-color: #001f3f; /* Dunkelblau */
+      color: beige;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+    }
 
-        nav img {
-            height: 50px;
-        }
+    nav img {
+      height: 50px;
+    }
 
-        nav a {
-            color: beige;
-            margin-left: 1.5rem;
-            text-decoration: none;
-            font-weight: bold;
-        }
+    nav a {
+      color: beige;
+      margin-left: 1.5rem;
+      text-decoration: none;
+      font-weight: bold;
+    }
 
-        .container {
-            max-width: 800px;
-            margin: 2rem auto;
-            background-color: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
 
-        textarea, input[type="text"] {
-            width: 100%;
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            resize: vertical;
-            font-family: monospace;
-            margin-top: 0.5rem;
-        }
+    textarea, input[type="text"] {
+      width: 100%;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
 
-        button {
-            background-color: #001f3f;
-            color: beige;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
+    textarea {
+      height: 200px;
+      font-family: monospace;
+    }
 
-        table {
-            width: 100%;
-            margin-top: 2rem;
-            border-collapse: collapse;
-        }
+    button {
+      background-color: #001f3f;
+      color: beige;
+      border: none;
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
 
-        table, th, td {
-            border: 1px solid #ccc;
-        }
+    table {
+      width: 100%;
+      margin-top: 2rem;
+      border-collapse: collapse;
+    }
 
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-        }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
 
-        th {
-            background-color: #001f3f;
-            color: beige;
-        }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+    }
 
-        footer {
-            margin-top: 4rem;
-            padding: 2rem;
-            background-color: #001f3f;
-            color: beige;
-            text-align: center;
-        }
-    </style>
+    th {
+      background-color: #001f3f;
+      color: beige;
+    }
+
+    footer {
+      margin-top: 4rem;
+      padding: 2rem;
+      background-color: #001f3f;
+      color: beige;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Navigation -->
-    <nav>
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
-        <div>
-            <a href="#leistungen">Leistungen</a>
-            <a href="#ueber-uns">Über Uns</a>
-            <a href="#kontakt">Kontakt</a>
-        </div>
-    </nav>
-
-    <!-- Inhalt -->
-    <div class="container">
-        <h1>SEO-Check für deine Landingpage</h1>
-
-        <p>Füge hier den HTML-Code deiner Seite ein:</p>
-        <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
-
-        <p>Gib zusätzlich die vollständige URL deiner Website für die robots.txt-Prüfung ein:</p>
-        <input type="text" id="robotsUrl" placeholder="https://www.deineseite.de">
-
-        <button onclick="analyzeAll()">Analysieren</button>
-
-        <table id="resultsTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>SEO Element</th>
-                    <th>Status</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+  <!-- Navigation -->
+  <nav>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+    <div>
+      <a href="#leistungen">Leistungen</a>
+      <a href="#ueber-uns">Über Uns</a>
+      <a href="#kontakt">Kontakt</a>
     </div>
+  </nav>
 
-    <!-- Footer -->
-    <footer>
-        &copy; {{ year }} Deine SEO Agentur – Alle Rechte vorbehalten.
-    </footer>
+  <!-- Inhalt -->
+  <div class="container">
+    <h1>SEO-Check für deine Landingpage</h1>
 
-    <!-- JS -->
-    <script>
-        async function analyzeAll() {
-            const html = document.getElementById("htmlInput").value;
-            const url = document.getElementById("robotsUrl").value;
-            const tbody = document.querySelector("#resultsTable tbody");
-            tbody.innerHTML = "";
+    <p>Füge hier den HTML-Quellcode deiner Seite ein:</p>
+    <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
 
-            // 1. SEO HTML Analyse
-            let seoData = {};
-            try {
-                const seoResponse = await fetch("/check-seo", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ html: html })
-                });
-                seoData = await seoResponse.json();
-            } catch (error) {
-                seoData["HTML Analyse"] = {
-                    Status: "Fehler",
-                    Details: "Konnte nicht analysiert werden."
-                };
-            }
+    <p>Oder gib die URL deiner Website ein:</p>
+    <input type="text" id="urlInput" placeholder="https://www.beispiel.de">
 
-            // 2. robots.txt Prüfung
-            let robotsResult = {
-                Status: "Fehler",
-                Details: "robots.txt konnte nicht geprüft werden."
-            };
-            if (url) {
-                try {
-                    const robotsResponse = await fetch("/check-robots", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ url: url })
-                    });
-                    const robotsData = await robotsResponse.json();
-                    robotsResult = {
-                        Status: robotsData.exists ? "Vorhanden" : "Fehlt",
-                        Details: robotsData.message || ""
-                    };
-                } catch (e) {
-                    robotsResult = {
-                        Status: "Fehler",
-                        Details: "robots.txt Anfrage fehlgeschlagen."
-                    };
-                }
-            }
+    <button onclick="analyzeAll()">Analysieren</button>
 
-            // 3. Tabelle befüllen
-            for (const [key, value] of Object.entries(seoData)) {
-                const row = `<tr>
-                    <td>${key}</td>
-                    <td>${value.Status}</td>
-                    <td>${value.Details}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            }
+    <table id="resultsTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>SEO Element</th>
+          <th>Status</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-            // 4. robots.txt Ergebnis anhängen
-            const robotsRow = `<tr>
-                <td>robots.txt</td>
-                <td>${robotsResult.Status}</td>
-                <td>${robotsResult.Details}</td>
-            </tr>`;
-            tbody.innerHTML += robotsRow;
+  <!-- Footer -->
+  <footer>
+    &copy; {{ year }} Deine SEO Agentur – Alle Rechte vorbehalten.
+  </footer>
 
-            document.getElementById("resultsTable").style.display = "table";
-        }
+  <!-- Script -->
+  <script>
+    async function analyzeAll() {
+      const html = document.getElementById("htmlInput").value;
+      const url = document.getElementById("urlInput").value.trim();
+      const tbody = document.querySelector("#resultsTable tbody");
+      tbody.innerHTML = [];
 
-        // Aktuelles Jahr im Footer einfügen
-        document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
-    </script>
+      const results = {};
+
+      // 1. Analyse HTML-Quellcode
+      if (html.length > 0) {
+        const htmlResponse = await fetch("/check-seo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ html: html })
+        });
+
+        const htmlData = await htmlResponse.json();
+        Object.assign(results, htmlData);
+      }
+
+      // 2. Analyse robots.txt & sitemap.xml
+      if (url.length > 0) {
+        const metaResponse = await fetch("/check-meta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: url })
+        });
+
+        const metaData = await metaResponse.json();
+        Object.assign(results, metaData);
+      }
+
+      // Ergebnisse anzeigen
+      for (const [key, value] of Object.entries(results)) {
+        const row = `<tr>
+          <td>${key}</td>
+          <td>${value.Status}</td>
+          <td><a href="${value.Details}" target="_blank">${value.Details}</a></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      }
+
+      document.getElementById("resultsTable").style.display = "table";
+    }
+
+    // Jahr im Footer aktualisieren
+    document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
+  </script>
 
 </body>
 </html>
