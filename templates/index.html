@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <title>SEO Checker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f5f5dc; /* Beige */
+      background-color: #f5f5dc;
       margin: 0;
       padding: 0;
     }
 
     nav {
-      background-color: #001f3f; /* Dunkelblau */
+      background-color: #001f3f;
       color: beige;
       display: flex;
       justify-content: space-between;
@@ -41,12 +42,11 @@
     }
 
     textarea, input[type="text"] {
-      width: calc(100% - 2rem);
-      margin: 0 auto 1rem auto;
-      display: block;
+      width: 100%;
       padding: 1rem;
       border-radius: 8px;
       border: 1px solid #ccc;
+      margin-bottom: 1rem;
       font-size: 1rem;
     }
 
@@ -64,6 +64,14 @@
       border-radius: 5px;
       cursor: pointer;
       margin-top: 1rem;
+      margin-right: 1rem;
+    }
+
+    #loader {
+      display: none;
+      margin: 1rem 0;
+      color: #001f3f;
+      font-weight: bold;
     }
 
     table {
@@ -84,6 +92,14 @@
     th {
       background-color: #001f3f;
       color: beige;
+    }
+
+    .row-ok {
+      background-color: #d6f5d6; /* hellgrün */
+    }
+
+    .row-warn {
+      background-color: #f8d7da; /* hellrot */
     }
 
     footer {
@@ -117,7 +133,10 @@
     <p>Oder gib die URL deiner Website ein:</p>
     <input type="text" id="urlInput" placeholder="https://www.beispiel.de">
 
+    <div id="loader">🔄 Analyse läuft...</div>
+
     <button onclick="analyzeAll()">Analysieren</button>
+    <button onclick="exportToPDF()">Als PDF exportieren</button>
 
     <table id="resultsTable" style="display:none;">
       <thead>
@@ -143,50 +162,74 @@
       const url = document.getElementById("urlInput").value.trim();
       const tbody = document.querySelector("#resultsTable tbody");
       tbody.innerHTML = "";
+      document.getElementById("resultsTable").style.display = "none";
+      document.getElementById("loader").style.display = "block";
 
       const results = {};
 
-      // 1. Analyse HTML-Quellcode
-      if (html.length > 0) {
-        const htmlResponse = await fetch("/check-seo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ html: html })
-        });
+      try {
+        if (html.length > 0) {
+          const htmlResponse = await fetch("/check-seo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ html: html })
+          });
+          const htmlData = await htmlResponse.json();
+          Object.assign(results, htmlData);
+        }
 
-        const htmlData = await htmlResponse.json();
-        Object.assign(results, htmlData);
+        if (url.length > 0) {
+          const metaResponse = await fetch("/check-meta", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: url })
+          });
+          const metaData = await metaResponse.json();
+          Object.assign(results, metaData);
+        }
+
+        for (const [key, value] of Object.entries(results)) {
+          const status = value.Status.toLowerCase();
+          const rowClass = status.includes("ok") || status.includes("vorhanden") || status.includes("indexiert") ? "row-ok" : "row-warn";
+          const row = `<tr class="${rowClass}">
+            <td>${key}</td>
+            <td>${value.Status}</td>
+            <td><a href="${value.Details}" target="_blank">${value.Details}</a></td>
+          </tr>`;
+          tbody.innerHTML += row;
+        }
+
+        document.getElementById("resultsTable").style.display = "table";
+      } catch (err) {
+        alert("Fehler bei der Analyse. Bitte versuche es erneut.");
+        console.error(err);
+      } finally {
+        document.getElementById("loader").style.display = "none";
       }
+    }
 
-      // 2. Analyse robots.txt & sitemap.xml
-      if (url.length > 0) {
-        const metaResponse = await fetch("/check-meta", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: url })
-        });
+    function exportToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
 
-        const metaData = await metaResponse.json();
-        Object.assign(results, metaData);
-      }
+      doc.setFontSize(18);
+      doc.text("SEO-Analyse Ergebnisse", 14, 20);
 
-      // Ergebnisse anzeigen
-      for (const [key, value] of Object.entries(results)) {
-        const details = value.Details;
-        const isLink = typeof details === "string" && (details.startsWith("http") || details.startsWith("https"));
-        const detailCell = isLink
-          ? `<a href="${details}" target="_blank">${details}</a>`
-          : details;
+      let y = 30;
+      const rows = document.querySelectorAll("#resultsTable tbody tr");
+      rows.forEach((row, i) => {
+        const cols = row.querySelectorAll("td");
+        const text = `${cols[0].innerText} | ${cols[1].innerText} | ${cols[2].innerText}`;
+        doc.setFontSize(12);
+        doc.text(text, 14, y);
+        y += 10;
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+      });
 
-        const row = `<tr>
-          <td>${key}</td>
-          <td>${value.Status}</td>
-          <td>${detailCell}</td>
-        </tr>`;
-        tbody.innerHTML += row;
-      }
-
-      document.getElementById("resultsTable").style.display = "table";
+      doc.save("seo-ergebnisse.pdf");
     }
 
     // Jahr im Footer aktualisieren
