@@ -89,11 +89,11 @@
       color: beige;
     }
 
-    tr.success {
+    .row-ok {
       background-color: #d4edda;
     }
 
-    tr.error {
+    .row-error {
       background-color: #f8d7da;
     }
 
@@ -185,11 +185,30 @@
       }
 
       for (const [key, value] of Object.entries(results)) {
-        const isSuccess = ["OK", "vorhanden", "ist indexiert, Links werden gefolgt"].includes(value.Status);
-        const row = `<tr class="${isSuccess ? 'success' : 'error'}">
+        const statusText = value.Status.toLowerCase();
+        let rowClass = "";
+
+        if (statusText.includes("alles okay") || statusText === "ok" || statusText === "vorhanden") {
+          rowClass = "row-ok";
+        } else if (
+          statusText.includes("nicht vorhanden") ||
+          statusText.includes("fehlt") ||
+          statusText.includes("zu lang") ||
+          statusText.includes("zu kurz") ||
+          statusText.includes("zu viele") ||
+          statusText.includes("fehler")
+        ) {
+          rowClass = "row-error";
+        }
+
+        const details = value.Details.startsWith("http")
+          ? `<a href="${value.Details}" target="_blank">${value.Details}</a>`
+          : value.Details;
+
+        const row = `<tr class="${rowClass}">
           <td>${key}</td>
           <td>${value.Status}</td>
-          <td>${value.Details.startsWith('http') ? `<a href='${value.Details}' target='_blank'>${value.Details}</a>` : value.Details}</td>
+          <td>${details}</td>
         </tr>`;
         tbody.innerHTML += row;
       }
