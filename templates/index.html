@@ -41,11 +41,12 @@
     }
 
     textarea, input[type="text"] {
-      width: 100%;
+      width: calc(100% - 2rem);
+      margin: 0 auto 1rem auto;
+      display: block;
       padding: 1rem;
       border-radius: 8px;
       border: 1px solid #ccc;
-      margin-bottom: 1rem;
       font-size: 1rem;
     }
 
@@ -141,7 +142,7 @@
       const html = document.getElementById("htmlInput").value;
       const url = document.getElementById("urlInput").value.trim();
       const tbody = document.querySelector("#resultsTable tbody");
-      tbody.innerHTML = [];
+      tbody.innerHTML = "";
 
       const results = {};
 
@@ -171,10 +172,16 @@
 
       // Ergebnisse anzeigen
       for (const [key, value] of Object.entries(results)) {
+        const details = value.Details;
+        const isLink = typeof details === "string" && (details.startsWith("http") || details.startsWith("https"));
+        const detailCell = isLink
+          ? `<a href="${details}" target="_blank">${details}</a>`
+          : details;
+
         const row = `<tr>
           <td>${key}</td>
           <td>${value.Status}</td>
-          <td><a href="${value.Details}" target="_blank">${value.Details}</a></td>
+          <td>${detailCell}</td>
         </tr>`;
         tbody.innerHTML += row;
       }
