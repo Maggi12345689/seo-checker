@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from bs4 import BeautifulSoup
 import requests
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
@@ -80,14 +81,21 @@ def check_seo():
 @app.route("/check-meta", methods=["POST"])
 def check_meta():
     data = request.json
-    url = data.get("url", "").strip()
+    full_url = data.get("url", "").strip()
     results = {}
 
-    if not url.startswith("http"):
+    if not full_url.startswith("http"):
         return jsonify({"error": "Ungültige URL"}), 400
 
     try:
-        robots_url = url.rstrip("/") + "/robots.txt"
+        parsed = urlparse(full_url)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+    except:
+        return jsonify({"error": "URL konnte nicht gelesen werden"}), 400
+
+    # robots.txt prüfen
+    try:
+        robots_url = base_url + "/robots.txt"
         headers = {"User-Agent": "Mozilla/5.0"}
         r = requests.get(robots_url, timeout=10, headers=headers)
         if r.status_code == 200:
@@ -100,18 +108,19 @@ def check_meta():
                 "Status": "Fehlt",
                 "Details": f"Nicht gefunden (Status {r.status_code})"
             }
-    except:
+    except Exception as e:
         results["robots.txt"] = {
             "Status": "Fehler",
-            "Details": "Fehler beim Abruf"
+            "Details": f"Fehler beim Abruf: {str(e)}"
         }
 
+    # Sitemap prüfen
     sitemap_urls = ["/sitemap.xml", "/sitemap_index.xml"]
     sitemap_found = False
     for sitemap_path in sitemap_urls:
-        sitemap_full_url = url.rstrip("/") + sitemap_path
+        sitemap_full_url = base_url + sitemap_path
         try:
-            s = requests.get(sitemap_full_url, timeout=5)
+            s = requests.get(sitemap_full_url, timeout=10, headers=headers)
             if s.status_code == 200:
                 results["Sitemap"] = {
                     "Status": "Vorhanden",
@@ -121,6 +130,7 @@ def check_meta():
                 break
         except:
             continue
+
     if not sitemap_found:
         results["Sitemap"] = {
             "Status": "Fehlt",
