@@ -88,7 +88,8 @@ def check_meta():
 
     try:
         robots_url = url.rstrip("/") + "/robots.txt"
-        r = requests.get(robots_url, timeout=5)
+        headers = {"User-Agent": "Mozilla/5.0"}
+r = requests.get(robots_url, timeout=10, headers=headers)
         if r.status_code == 200:
             results["robots.txt"] = {
                 "Status": "Vorhanden",
