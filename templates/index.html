@@ -1,243 +1,88 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <title>SEO Checker</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f5f5dc;
-      margin: 0;
-      padding: 0;
-    }
+<!-- Script -->
+<script>
+  async function analyzeAll() {
+    const html = document.getElementById("htmlInput").value;
+    const url = document.getElementById("urlInput").value.trim();
+    const tbody = document.querySelector("#resultsTable tbody");
+    const loading = document.getElementById("loading");
 
-    nav {
-      background-color: #001f3f;
-      color: beige;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1rem 2rem;
-    }
+    tbody.innerHTML = "";
+    loading.style.display = "block";
+    document.getElementById("resultsTable").style.display = "none";
+    document.getElementById("exportButton").style.display = "none";
 
-    nav img {
-      height: 50px;
-    }
+    const results = {};
 
-    nav a {
-      color: beige;
-      margin-left: 1.5rem;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 2rem auto;
-      background-color: white;
-      padding: 2rem 3rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
-    textarea, input[type="text"] {
-      width: 90%;
-      margin: 0 auto 1rem auto;
-      display: block;
-      padding: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-
-    button {
-      background-color: #001f3f;
-      color: beige;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      font-size: 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 1rem auto;
-      display: block;
-    }
-
-    #loading {
-      text-align: center;
-      font-weight: bold;
-      color: #001f3f;
-      display: none;
-    }
-
-    table {
-      width: 100%;
-      margin-top: 2rem;
-      border-collapse: collapse;
-    }
-
-    table, th, td {
-      border: 1px solid #ccc;
-    }
-
-    th, td {
-      padding: 0.75rem;
-      text-align: left;
-    }
-
-    th {
-      background-color: #001f3f;
-      color: beige;
-    }
-
-    tr.success {
-      background-color: #d4edda;
-    }
-
-    tr.error {
-      background-color: #f8d7da;
-    }
-
-    footer {
-      margin-top: 4rem;
-      padding: 2rem;
-      background-color: #001f3f;
-      color: beige;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Navigation -->
-  <nav>
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
-    <div>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#ueber-uns">Über Uns</a>
-      <a href="#kontakt">Kontakt</a>
-    </div>
-  </nav>
-
-  <!-- Inhalt -->
-  <div class="container">
-    <h1>SEO-Check für deine Landingpage</h1>
-
-    <p>Füge hier den HTML-Quellcode deiner Seite ein:</p>
-    <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
-
-    <p>Oder gib die URL deiner Website ein:</p>
-    <input type="text" id="urlInput" placeholder="https://www.beispiel.de">
-
-    <button onclick="analyzeAll()">Analysieren</button>
-    <p id="loading">Analyse läuft...</p>
-
-    <table id="resultsTable" style="display:none;">
-      <thead>
-        <tr>
-          <th>SEO Element</th>
-          <th>Status</th>
-          <th>Details</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <button onclick="downloadPDF()" id="exportButton" style="display:none;">Export als PDF</button>
-  </div>
-
-  <!-- Footer -->
-  <footer>
-    &copy; {{ year }} Deine SEO Agentur – Alle Rechte vorbehalten.
-  </footer>
-
-  <!-- Script -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    async function analyzeAll() {
-      const html = document.getElementById("htmlInput").value;
-      const url = document.getElementById("urlInput").value.trim();
-      const tbody = document.querySelector("#resultsTable tbody");
-      const loading = document.getElementById("loading");
-
-      tbody.innerHTML = "";
-      loading.style.display = "block";
-      document.getElementById("resultsTable").style.display = "none";
-      document.getElementById("exportButton").style.display = "none";
-
-      const results = {};
-
-      if (html.length > 0) {
-        const htmlResponse = await fetch("/check-seo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ html })
-        });
-        Object.assign(results, await htmlResponse.json());
-      }
-
-      if (url.length > 0) {
-        const metaResponse = await fetch("/check-meta", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url })
-        });
-        Object.assign(results, await metaResponse.json());
-      }
-
-      const labelMapping = {
-        "Title": "Meta Title",
-        "Meta Description": "Meta Description",
-        "Meta Robots": "Angaben für die Suchmaschine",
-        "Canonical": "Canonical-Tag",
-        "H1": "H1-Überschrift",
-        "Bilder ALT-Attribute": "Alt-Attribute der Bilder auf der Seite",
-        "robots.txt": "robots.txt",
-        "Sitemap": "XML-Sitemap"
-      };
-
-      const greenKeywords = ["alles okay", "ok", "vorhanden", "ist indexiert, links werden gefolgt"];
-      const redKeywords = ["nicht vorhanden", "zu kurz", "zu lang", "zu viele", "fehl", "fehlt"];
-
-      for (const [key, value] of Object.entries(results)) {
-        const status = value.Status.toLowerCase();
-        const isSuccess = greenKeywords.some(k => status.includes(k));
-        const isError = redKeywords.some(k => status.includes(k));
-        const rowClass = isSuccess ? "success" : (isError ? "error" : "");
-
-        const displayKey = labelMapping[key] || key;
-
-        const row = `<tr class="${rowClass}">
-          <td>${displayKey}</td>
-          <td>${value.Status}</td>
-          <td>${value.Details.startsWith('http') ? `<a href='${value.Details}' target='_blank'>${value.Details}</a>` : value.Details}</td>
-        </tr>`;
-        tbody.innerHTML += row;
-      }
-
-      document.getElementById("resultsTable").style.display = "table";
-      document.getElementById("exportButton").style.display = "block";
-      loading.style.display = "none";
-    }
-
-    async function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      doc.setFontSize(14);
-      doc.text("SEO Analyse Ergebnisse", 10, 10);
-
-      let y = 20;
-      document.querySelectorAll("#resultsTable tbody tr").forEach(row => {
-        const cells = row.querySelectorAll("td");
-        const text = `${cells[0].innerText}: ${cells[1].innerText} – ${cells[2].innerText}`;
-        doc.text(text, 10, y);
-        y += 10;
+    if (html.length > 0) {
+      const htmlResponse = await fetch("/check-seo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html })
       });
-
-      doc.save("seo-analyse.pdf");
+      Object.assign(results, await htmlResponse.json());
     }
 
-    document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
-  </script>
-</body>
-</html>
+    if (url.length > 0) {
+      const metaResponse = await fetch("/check-meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      Object.assign(results, await metaResponse.json());
+    }
+
+    const labelMapping = {
+      "Title": "Meta Title",
+      "Meta Description": "Meta Description",
+      "Meta Robots": "Angaben für die Suchmaschine",
+      "Canonical": "Canonical-Tag",
+      "H1": "H1-Überschrift",
+      "Bilder ALT-Attribute": "Alt-Attribute der Bilder auf der Seite",
+      "robots.txt": "robots.txt",
+      "Sitemap": "XML-Sitemap"
+    };
+
+    const greenKeywords = ["alles okay", "ok", "vorhanden", "ist indexiert, links werden gefolgt"];
+    const redKeywords = ["nicht vorhanden", "zu kurz", "zu lang", "zu viele", "fehl", "fehlt"];
+
+    for (const [key, value] of Object.entries(results)) {
+      const status = value.Status.toLowerCase().trim();
+      const isSuccess = greenKeywords.some(k => status.includes(k));
+      const isError = redKeywords.some(k => status.includes(k));
+      const rowClass = isSuccess ? "success" : (isError ? "error" : "");
+
+      const displayKey = labelMapping[key] || key;
+
+      const row = `<tr class="${rowClass}">
+        <td>${displayKey}</td>
+        <td>${value.Status}</td>
+        <td>${value.Details.startsWith('http') ? `<a href='${value.Details}' target='_blank'>${value.Details}</a>` : value.Details}</td>
+      </tr>`;
+      tbody.innerHTML += row;
+    }
+
+    document.getElementById("resultsTable").style.display = "table";
+    document.getElementById("exportButton").style.display = "block";
+    loading.style.display = "none";
+  }
+
+  async function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFontSize(14);
+    doc.text("SEO Analyse Ergebnisse", 10, 10);
+
+    let y = 20;
+    document.querySelectorAll("#resultsTable tbody tr").forEach(row => {
+      const cells = row.querySelectorAll("td");
+      const text = `${cells[0].innerText}: ${cells[1].innerText} – ${cells[2].innerText}`;
+      doc.text(text, 10, y);
+      y += 10;
+    });
+
+    doc.save("seo-analyse.pdf");
+  }
+
+  document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
+</script>
