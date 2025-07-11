@@ -89,11 +89,11 @@
       color: beige;
     }
 
-    .row-ok {
+    tr.success {
       background-color: #d4edda;
     }
 
-    .row-error {
+    tr.error {
       background-color: #f8d7da;
     }
 
@@ -184,31 +184,19 @@
         Object.assign(results, await metaResponse.json());
       }
 
+      const greenKeywords = ["alles okay", "ok", "vorhanden", "ist indexiert, links werden gefolgt"];
+      const redKeywords = ["nicht vorhanden", "zu kurz", "zu lang", "zu viele", "fehl", "fehlt"];
+
       for (const [key, value] of Object.entries(results)) {
-        const statusText = value.Status.toLowerCase();
-        let rowClass = "";
-
-        if (statusText.includes("alles okay") || statusText === "ok" || statusText === "vorhanden") {
-          rowClass = "row-ok";
-        } else if (
-          statusText.includes("nicht vorhanden") ||
-          statusText.includes("fehlt") ||
-          statusText.includes("zu lang") ||
-          statusText.includes("zu kurz") ||
-          statusText.includes("zu viele") ||
-          statusText.includes("fehler")
-        ) {
-          rowClass = "row-error";
-        }
-
-        const details = value.Details.startsWith("http")
-          ? `<a href="${value.Details}" target="_blank">${value.Details}</a>`
-          : value.Details;
+        const status = value.Status.toLowerCase();
+        const isSuccess = greenKeywords.some(k => status.includes(k));
+        const isError = redKeywords.some(k => status.includes(k));
+        const rowClass = isSuccess ? "success" : (isError ? "error" : "");
 
         const row = `<tr class="${rowClass}">
           <td>${key}</td>
           <td>${value.Status}</td>
-          <td>${details}</td>
+          <td>${value.Details.startsWith('http') ? `<a href='${value.Details}' target='_blank'>${value.Details}</a>` : value.Details}</td>
         </tr>`;
         tbody.innerHTML += row;
       }
