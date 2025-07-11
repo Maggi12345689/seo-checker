@@ -12,12 +12,9 @@ def index():
 def check_seo():
     data = request.json
     html = data.get("html", "")
-    url = data.get("url", "").strip()
-
     soup = BeautifulSoup(html, "html.parser")
     results = {}
 
-    # Hilfsfunktion zur Längenprüfung
     def length_status(text, min_len, max_len):
         if len(text) < min_len:
             return "zu kurz"
@@ -25,14 +22,12 @@ def check_seo():
             return "zu lang"
         return "OK"
 
-    # --- Title ---
     title = soup.title.string.strip() if soup.title and soup.title.string else ""
     results["Title"] = {
         "Status": "fehlt" if not title else length_status(title, 55, 65),
         "Details": f"{len(title)} Zeichen" if title else ""
     }
 
-    # --- Meta Description ---
     desc_tag = soup.find("meta", attrs={"name": "description"})
     desc = desc_tag["content"].strip() if desc_tag and desc_tag.get("content") else ""
     results["Meta Description"] = {
@@ -40,7 +35,6 @@ def check_seo():
         "Details": f"{len(desc)} Zeichen" if desc else ""
     }
 
-    # --- Meta Robots ---
     robots_tag = soup.find("meta", attrs={"name": "robots"})
     robots_content = robots_tag["content"].strip().lower() if robots_tag and robots_tag.get("content") else ""
     if not robots_content:
@@ -54,7 +48,6 @@ def check_seo():
         "Details": robots_content
     }
 
-    # --- Canonical ---
     canonical = soup.find("link", rel="canonical")
     canonical_href = canonical["href"].strip() if canonical and canonical.get("href") else ""
     results["Canonical"] = {
@@ -62,7 +55,6 @@ def check_seo():
         "Details": canonical_href
     }
 
-    # --- H1 ---
     h1s = soup.find_all("h1")
     if not h1s:
         h1_status = "fehlt"
@@ -75,7 +67,6 @@ def check_seo():
         "Details": f"{len(h1s)} gefunden"
     }
 
-    # --- Bilder ALT-Attribute ---
     images = soup.find_all("img")
     images_without_alt = [img for img in images if not img.get("alt")]
     img_status = "fehlt" if images_without_alt else "vorhanden"
@@ -84,48 +75,56 @@ def check_seo():
         "Details": f"{len(images_without_alt)} ohne ALT" if images_without_alt else "alle Bilder mit ALT"
     }
 
-    # --- robots.txt Prüfung ---
-    if url.startswith("http"):
-        try:
-            robots_url = url.rstrip("/") + "/robots.txt"
-            r = requests.get(robots_url, timeout=5)
-            if r.status_code == 200:
-                results["robots.txt"] = {
-                    "Status": "Vorhanden",
-                    "Details": robots_url
-                }
-            else:
-                results["robots.txt"] = {
-                    "Status": "Fehlt",
-                    "Details": "Nicht gefunden (Status " + str(r.status_code) + ")"
-                }
-        except:
-            results["robots.txt"] = {
-                "Status": "Fehler",
-                "Details": "Fehler beim Abruf"
-            }
+    return jsonify(results)
 
-        # --- Sitemap Prüfung ---
-        sitemap_urls = ["/sitemap.xml", "/sitemap_index.xml"]
-        sitemap_found = False
-        for sitemap_path in sitemap_urls:
-            sitemap_full_url = url.rstrip("/") + sitemap_path
-            try:
-                s = requests.get(sitemap_full_url, timeout=5)
-                if s.status_code == 200:
-                    results["Sitemap"] = {
-                        "Status": "Vorhanden",
-                        "Details": sitemap_full_url
-                    }
-                    sitemap_found = True
-                    break
-            except:
-                continue
-        if not sitemap_found:
-            results["Sitemap"] = {
-                "Status": "Fehlt",
-                "Details": "Keine Sitemap gefunden unter /sitemap.xml oder /sitemap_index.xml"
+@app.route("/check-meta", methods=["POST"])
+def check_meta():
+    data = request.json
+    url = data.get("url", "").strip()
+    results = {}
+
+    if not url.startswith("http"):
+        return jsonify({"error": "Ungültige URL"}), 400
+
+    try:
+        robots_url = url.rstrip("/") + "/robots.txt"
+        r = requests.get(robots_url, timeout=5)
+        if r.status_code == 200:
+            results["robots.txt"] = {
+                "Status": "Vorhanden",
+                "Details": robots_url
             }
+        else:
+            results["robots.txt"] = {
+                "Status": "Fehlt",
+                "Details": f"Nicht gefunden (Status {r.status_code})"
+            }
+    except:
+        results["robots.txt"] = {
+            "Status": "Fehler",
+            "Details": "Fehler beim Abruf"
+        }
+
+    sitemap_urls = ["/sitemap.xml", "/sitemap_index.xml"]
+    sitemap_found = False
+    for sitemap_path in sitemap_urls:
+        sitemap_full_url = url.rstrip("/") + sitemap_path
+        try:
+            s = requests.get(sitemap_full_url, timeout=5)
+            if s.status_code == 200:
+                results["Sitemap"] = {
+                    "Status": "Vorhanden",
+                    "Details": sitemap_full_url
+                }
+                sitemap_found = True
+                break
+        except:
+            continue
+    if not sitemap_found:
+        results["Sitemap"] = {
+            "Status": "Fehlt",
+            "Details": "Keine Sitemap gefunden unter /sitemap.xml oder /sitemap_index.xml"
+        }
 
     return jsonify(results)
 
