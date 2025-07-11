@@ -184,6 +184,17 @@
         Object.assign(results, await metaResponse.json());
       }
 
+      const labelMapping = {
+        "Title": "Meta Title",
+        "Meta Description": "Meta Description",
+        "Meta Robots": "Angaben für die Suchmaschine",
+        "Canonical": "Canonical-Tag",
+        "H1": "H1-Überschrift",
+        "Bilder ALT-Attribute": "Alt-Attribute der Bilder auf der Seite",
+        "robots.txt": "robots.txt",
+        "Sitemap": "XML-Sitemap"
+      };
+
       const greenKeywords = ["alles okay", "ok", "vorhanden", "ist indexiert, links werden gefolgt"];
       const redKeywords = ["nicht vorhanden", "zu kurz", "zu lang", "zu viele", "fehl", "fehlt"];
 
@@ -193,8 +204,10 @@
         const isError = redKeywords.some(k => status.includes(k));
         const rowClass = isSuccess ? "success" : (isError ? "error" : "");
 
+        const displayKey = labelMapping[key] || key;
+
         const row = `<tr class="${rowClass}">
-          <td>${key}</td>
+          <td>${displayKey}</td>
           <td>${value.Status}</td>
           <td>${value.Details.startsWith('http') ? `<a href='${value.Details}' target='_blank'>${value.Details}</a>` : value.Details}</td>
         </tr>`;
