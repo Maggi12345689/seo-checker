@@ -131,6 +131,17 @@
     .orange { background-color: #fd7e14; }
     .red { background-color: #dc3545; }
 
+    #pdfLink {
+      text-align: right;
+      margin-top: 1rem;
+    }
+
+    #pdfLink a {
+      color: #001f3f;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
     footer {
       margin-top: 4rem;
       padding: 2rem;
@@ -142,160 +153,181 @@
 </head>
 <body>
 
-  <nav>
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
-    <div>
-      <a href="#leistungen">Leistungen</a>
-      <a href="#ueber-uns">Über Uns</a>
-      <a href="#kontakt">Kontakt</a>
-    </div>
-  </nav>
+<nav>
+  <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+  <div>
+    <a href="#leistungen">Leistungen</a>
+    <a href="#ueber-uns">Über Uns</a>
+    <a href="#kontakt">Kontakt</a>
+  </div>
+</nav>
 
-  <div class="container">
-    <h1>SEO-Check für deine Landingpage</h1>
+<div class="container">
+  <h1>SEO-Check für deine Landingpage</h1>
 
-    <div class="info-box" onclick="toggleInfo()">
-      <strong>▸ Wie kopiere ich den Quellcode meiner Website?</strong>
-      <div id="infoContent" class="info-content">
-        <p>Klicke mit der rechten Maustaste auf die Seite und wähle „Seitenquelltext anzeigen“ oder drücke <strong>Strg+U</strong>.<br>
+  <div class="info-box" onclick="toggleInfo()">
+    <strong>▸ Wie kopiere ich den Quellcode meiner Website?</strong>
+    <div id="infoContent" class="info-content">
+      <p>Klicke mit der rechten Maustaste auf die Seite und wähle „Seitenquelltext anzeigen“ oder drücke <strong>Strg+U</strong>.<br>
         Dann <strong>Strg+A</strong> drücken, um alles zu markieren, <strong>Strg+C</strong> zum Kopieren und hier mit <strong>Strg+V</strong> einfügen.</p>
-      </div>
     </div>
-
-    <p>Füge hier den HTML-Quellcode deiner Seite ein:</p>
-    <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
-
-    <p>Oder gib die URL deiner Website ein:</p>
-    <input type="text" id="urlInput" placeholder="https://www.beispiel.de">
-
-    <button onclick="analyzeAll()">Analysieren</button>
-    <p id="loading">Analyse läuft...</p>
-
-    <table id="resultsTable" style="display:none;">
-      <thead>
-        <tr>
-          <th>SEO Element</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <div id="indicatorBox" class="indicator" style="display:none;"></div>
-
-    <button onclick="downloadPDF()" id="exportButton" style="display:none;">Export als PDF</button>
   </div>
 
-  <footer>
-    &copy; {{ year }} Deine SEO Agentur – Alle Rechte vorbehalten.
-  </footer>
+  <p>Füge hier den HTML-Quellcode deiner Seite ein:</p>
+  <textarea id="htmlInput" placeholder="HTML-Code hier einfügen..."></textarea>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    function toggleInfo() {
-      const content = document.getElementById("infoContent");
-      content.style.display = content.style.display === "block" ? "none" : "block";
+  <p>Oder gib die URL deiner Website ein:</p>
+  <input type="text" id="urlInput" placeholder="https://www.beispiel.de">
+
+  <button onclick="analyzeAll()">Analysieren</button>
+  <p id="loading">Analyse läuft...</p>
+
+  <table id="resultsTable" style="display:none;">
+    <thead>
+    <tr>
+      <th>SEO Element</th>
+      <th>Status</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="indicatorBox" class="indicator" style="display:none;"></div>
+
+  <div id="ctaSection" style="display:none; margin-top: 2rem;">
+    <p style="font-size: 1rem; font-weight: bold;">Du willst alle SEO-Potenziale ausschöpfen? Dann sprich mit unserer Agentur!</p>
+    <button onclick="window.location.href='#kontakt'" style="margin-top: 0.5rem;">Jetzt kontaktieren</button>
+  </div>
+
+  <div id="pdfLink" style="display:none;">
+    <a href="#" onclick="downloadPDF()">📄 Export als PDF</a>
+  </div>
+</div>
+
+<footer>
+  &copy; {{ year }} Deine SEO Agentur – Alle Rechte vorbehalten.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+  function toggleInfo() {
+    const content = document.getElementById("infoContent");
+    content.style.display = content.style.display === "block" ? "none" : "block";
+  }
+
+  async function analyzeAll() {
+    const html = document.getElementById("htmlInput").value;
+    const url = document.getElementById("urlInput").value.trim();
+    const tbody = document.querySelector("#resultsTable tbody");
+    const loading = document.getElementById("loading");
+    const indicatorBox = document.getElementById("indicatorBox");
+
+    tbody.innerHTML = "";
+    loading.style.display = "block";
+    document.getElementById("resultsTable").style.display = "none";
+    indicatorBox.style.display = "none";
+    document.getElementById("pdfLink").style.display = "none";
+    document.getElementById("ctaSection").style.display = "none";
+
+    const results = {};
+    if (html.length > 0) {
+      const htmlResponse = await fetch("/check-seo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html })
+      });
+      Object.assign(results, await htmlResponse.json());
+    }
+    if (url.length > 0) {
+      const metaResponse = await fetch("/check-meta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+      Object.assign(results, await metaResponse.json());
     }
 
-    async function analyzeAll() {
-      const html = document.getElementById("htmlInput").value;
-      const url = document.getElementById("urlInput").value.trim();
-      const tbody = document.querySelector("#resultsTable tbody");
-      const loading = document.getElementById("loading");
-      const indicatorBox = document.getElementById("indicatorBox");
+    const labelMapping = {
+      "Title": "Meta Title",
+      "Meta Description": "Meta Description",
+      "Meta Robots": "Angaben für die Suchmaschine",
+      "Canonical": "Canonical-Tag",
+      "H1": "H1-Überschrift",
+      "Bilder ALT-Attribute": "Alt-Attribute der Bilder auf der Seite",
+      "robots.txt": "robots.txt",
+      "Sitemap": "XML-Sitemap"
+    };
 
-      tbody.innerHTML = "";
-      loading.style.display = "block";
-      document.getElementById("resultsTable").style.display = "none";
-      document.getElementById("exportButton").style.display = "none";
-      indicatorBox.style.display = "none";
+    const greenKeywords = ["alles okay", "ok", "ist indexiert, links werden gefolgt"];
+    const redKeywords = ["nicht vorhanden", "zu kurz", "zu lang", "zu viele", "fehl", "fehlt"];
 
-      const results = {};
-      if (html.length > 0) {
-        const htmlResponse = await fetch("/check-seo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ html })
-        });
-        Object.assign(results, await htmlResponse.json());
-      }
-      if (url.length > 0) {
-        const metaResponse = await fetch("/check-meta", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url })
-        });
-        Object.assign(results, await metaResponse.json());
-      }
+    let greenCount = 0;
 
-      const labelMapping = {
-        "Title": "Meta Title",
-        "Meta Description": "Meta Description",
-        "Meta Robots": "Angaben für die Suchmaschine",
-        "Canonical": "Canonical-Tag",
-        "H1": "H1-Überschrift",
-        "Bilder ALT-Attribute": "Alt-Attribute der Bilder auf der Seite",
-        "robots.txt": "robots.txt",
-        "Sitemap": "XML-Sitemap"
-      };
+    for (const [key, value] of Object.entries(results)) {
+      const status = value.Status.toLowerCase().trim();
+      const isSuccess = greenKeywords.some(k => status.includes(k));
+      const isError = redKeywords.some(k => status.includes(k));
+      const rowClass = isSuccess ? "success" : (isError ? "error" : "");
+      const displayKey = labelMapping[key] || key;
+      if (isSuccess) greenCount++;
 
-      const greenKeywords = ["alles okay", "ok", "ist indexiert, links werden gefolgt"];
-      const redKeywords = ["nicht vorhanden", "zu kurz", "zu lang", "zu viele", "fehl", "fehlt"];
-
-      let greenCount = 0;
-
-      for (const [key, value] of Object.entries(results)) {
-        const status = value.Status.toLowerCase().trim();
-        const isSuccess = greenKeywords.some(k => status.includes(k));
-        const isError = redKeywords.some(k => status.includes(k));
-        const rowClass = isSuccess ? "success" : (isError ? "error" : "");
-        const displayKey = labelMapping[key] || key;
-        if (isSuccess) greenCount++;
-
-        const row = `<tr class="${rowClass}">
+      const row = `<tr class="${rowClass}">
           <td>${displayKey}</td>
           <td>${value.Status}</td>
         </tr>`;
-        tbody.innerHTML += row;
-      }
-
-      const total = 8;
-      let indicatorColor = "red";
-      let message = "Leider fehlen auf deiner Seite zentrale SEO-Elemente. Hol dir Unterstützung!";
-      if (greenCount === total) {
-        indicatorColor = "green";
-        message = "Glückwunsch! Deine Seite ist SEO-technisch top aufgestellt.";
-      } else if (greenCount >= 5) {
-        indicatorColor = "yellow";
-        message = "Sehr gut! Deine Seite ist größtenteils optimiert, kleinere Details kannst du noch verbessern.";
-      } else if (greenCount >= 1) {
-        indicatorColor = "orange";
-        message = "Es gibt gute Ansätze – aber du solltest deine SEO-Strategie noch ausbauen.";
-      }
-
-      indicatorBox.innerHTML = `<span class="dot ${indicatorColor}"></span> ${message}`;
-      indicatorBox.style.display = "flex";
-      document.getElementById("resultsTable").style.display = "table";
-      document.getElementById("exportButton").style.display = "block";
-      loading.style.display = "none";
+      tbody.innerHTML += row;
     }
 
-    async function downloadPDF() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.setFontSize(14);
-      doc.text("SEO Analyse Ergebnisse", 10, 10);
-      let y = 20;
-      document.querySelectorAll("#resultsTable tbody tr").forEach(row => {
-        const cells = row.querySelectorAll("td");
-        const text = `${cells[0].innerText}: ${cells[1].innerText}` + (cells[2] ? ` – ${cells[2].innerText}` : "");
-        doc.text(text, 10, y);
-        y += 10;
-      });
-      doc.save("seo-analyse.pdf");
+    const total = 8;
+    let indicatorColor = "red";
+    let message = "Leider fehlen auf deiner Seite zentrale SEO-Elemente. Hol dir Unterstützung!";
+    if (greenCount === total) {
+      indicatorColor = "green";
+      message = "Glückwunsch! Deine Seite ist SEO-technisch top aufgestellt.";
+    } else if (greenCount >= 5) {
+      indicatorColor = "yellow";
+      message = "Sehr gut! Deine Seite ist größtenteils optimiert, kleinere Details kannst du noch verbessern.";
+    } else if (greenCount >= 1) {
+      indicatorColor = "orange";
+      message = "Es gibt gute Ansätze – aber du solltest deine SEO-Strategie noch ausbauen.";
     }
 
-    document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
-  </script>
+    indicatorBox.innerHTML = `<span class="dot ${indicatorColor}"></span> ${message}`;
+    indicatorBox.style.display = "flex";
+    document.getElementById("resultsTable").style.display = "table";
+    document.getElementById("pdfLink").style.display = "block";
+    document.getElementById("ctaSection").style.display = "block";
+    loading.style.display = "none";
+  }
+
+  async function downloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text("SEO Analyse Ergebnisse", 10, 10);
+
+    let y = 20;
+    document.querySelectorAll("#resultsTable tbody tr").forEach(row => {
+      const cells = row.querySelectorAll("td");
+      const text = `${cells[0].innerText}: ${cells[1].innerText}`;
+      doc.text(text, 10, y);
+      y += 10;
+    });
+
+    const indicatorText = document.getElementById("indicatorBox").innerText;
+    if (indicatorText) {
+      y += 10;
+      doc.setFontSize(12);
+      doc.text("Auswertung:", 10, y);
+      y += 8;
+      doc.setFontSize(11);
+      doc.text(indicatorText, 10, y);
+    }
+
+    doc.save("seo-analyse.pdf");
+  }
+
+  document.querySelector("footer").innerHTML = document.querySelector("footer").innerHTML.replace("{{ year }}", new Date().getFullYear());
+</script>
 </body>
 </html>
